@@ -1,13 +1,16 @@
 .PHONY: clean
 
 main: parser.tab.o lex.yy.o main.c
-	gcc main.c -o parser parser.tab.o lex.yy.o
+	g++ main.c -o parser parser.tab.o lex.yy.o expr.o
 
-parser.tab.o: parser.tab.h parser.tab.c
-	gcc -c parser.tab.c
+parser.tab.o: parser.tab.h parser.tab.c expr.h
+	g++ -c parser.tab.c
+
+expr.o: expr.h expr.cpp
+	g++ -c expr.cpp
 
 lex.yy.o: lex.yy.c parser.tab.o
-	gcc -c lex.yy.c
+	g++ -c lex.yy.c
 
 lex.yy.c: lex.l
 	flex lex.l

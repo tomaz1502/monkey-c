@@ -1,14 +1,20 @@
 %{
 #include <ctype.h>
 #include <stdio.h>
+#include <vector>
 
 extern int yylex(void);
 extern int yyerror(const char* s);
 %}
 
+%code requires {
+    #include "expr.h"
+}
+
 %union {
     int num;
     char* id;
+    Expr expr;
 }
 
 %token T_NEWLINE
@@ -42,44 +48,41 @@ extern int yyerror(const char* s);
 %token <num> T_NUMBER
 %token <id> T_ID
 
-%start stmt
+%type <expr> return_stmt
+%type <expr> expr
+%type <expr> term
+%type <expr> factor
+
+%start stmts
 
 %%
 
 stmts :
   | stmt T_SEMICOLON stmts {}
-  | ;
+  | stmt {}
+  ;
 
-stmt :
-  | let_stmt {}
-  | return_stmt {}
-
-return_stmt :
-  | T_RETURN expr {}
-
-let_stmt :
-  | T_LET T_ID T_ASSIGN expr
-
-expr:
-
-
-
-loop : | loop line ;
-
-line : expr T_NEWLINE { printf("%d\n", $1); }
+stmt : return_stmt {}
      ;
-expr : expr T_PLUS term { $$ = $1 + $3; }
-     | term
+
+return_stmt : T_RETURN expr { $$ = $2; }
+            ;
+
+expr : expr T_PLUS term {}
+     | term { $$ = $1; }
      ;
-term : term T_MULT factor { $$ = $1 * $3;  }
-     | factor
+
+term : term T_MULT factor {}
+     | factor { $$ = $1; }
      ;
-factor : T_LPAR expr T_RPAR { $$ = $2; }
-     | T_NUMBER
-     ;
+
+factor : T_NUMBER { $$ = mk_int($1); }
+       | T_ID { $$ = mk_ident($1); }
+       ;
 
 %%
 
 int yyerror(const char* s) {
     printf("Error: %s\n", s);
+    return 0;
 }
